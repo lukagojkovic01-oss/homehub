@@ -9,14 +9,7 @@
       "pin": "1670"
     }
   ],
-  "shopping": [
-    {
-      "id": 1795015147173,
-      "text": "hleb",
-      "assignee": "Luka",
-      "completed": false
-    }
-  ],
+  "shopping": [],
   "todo": [],
   "events": [],
   "expenses": [],
