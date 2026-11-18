@@ -1,11 +1,5 @@
 {
-  "accounts": [
-    {
-      "name": "marko",
-      "pin": "",
-      "personalLimit": 1000
-    }
-  ],
+  "accounts": [],
   "shopping": [],
   "todo": [],
   "events": [],
