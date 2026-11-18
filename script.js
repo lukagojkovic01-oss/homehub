@@ -91,7 +91,6 @@ async function loadDataFromGitHub(isBackground = false) {
             expenseList = decodedContent.expenses || [];
             monthlyLimit = decodedContent.limit || 500;
             
-            // Sinhronizacija table za crtanje sa servera ako postoji
             if (decodedContent.canvasData && decodedContent.canvasData !== canvasDataStore) {
                 canvasDataStore = decodedContent.canvasData;
                 loadCanvasFromData(canvasDataStore);
@@ -278,10 +277,7 @@ function deleteAccount() {
     const confirmDelete = confirm(`Da li ste sigurni da želite trajno da obrišete nalog "${currentUser.name}"?`);
     if (!confirmDelete) return;
 
-    // Izbaci nalog iz liste registrovanih naloga
     registeredAccounts = registeredAccounts.filter(acc => acc.name !== currentUser.name);
-    
-    // Odjavi korisnika
     currentUser = null;
     localStorage.removeItem("homehub_logged_user");
 
@@ -349,7 +345,8 @@ function toggleShop(id) {
 
 function deleteShop(id) {
     shoppingList = shoppingList.filter(item => item.id !== id);
-    saveAndRenderShop();
+    renderShopping(); // Odmah osveži ekran
+    saveDataToGitHub(); // Pošalji na server
 }
 
 function saveAndRenderShop() {
@@ -402,7 +399,8 @@ function toggleTodo(id) {
 
 function deleteTodo(id) {
     todoList = todoList.filter(item => item.id !== id);
-    saveAndRenderTodo();
+    renderTodos(); // Odmah osveži ekran
+    saveDataToGitHub(); // Pošalji na server
 }
 
 function saveAndRenderTodo() {
@@ -455,7 +453,8 @@ function addEventItem() {
 
 function deleteEvent(id) {
     eventList = eventList.filter(item => item.id !== id);
-    saveAndRenderEvents();
+    renderEvents(); // Odmah osveži ekran
+    saveDataToGitHub(); // Pošalji na server
 }
 
 function saveAndRenderEvents() {
@@ -516,7 +515,8 @@ function addExpenseItem() {
 
 function deleteExpense(id) {
     expenseList = expenseList.filter(item => item.id !== id);
-    saveAndRenderExpenses();
+    renderExpenses(); // Odmah osveži ekran
+    saveDataToGitHub(); // Pošalji na server
 }
 
 function changeMonthlyLimit() {
@@ -602,8 +602,8 @@ function deletePersonalExpense(id) {
     if (accIndex !== -1) registeredAccounts[accIndex] = currentUser;
     localStorage.setItem("homehub_logged_user", JSON.stringify(currentUser));
 
-    renderPersonalBudget();
-    saveDataToGitHub();
+    renderPersonalBudget(); // Odmah osveži ekran
+    saveDataToGitHub(); // Pošalji na server
 }
 
 function changePersonalLimit() {
@@ -703,7 +703,7 @@ function initCanvas() {
         if (painting) {
             painting = false; 
             ctx.beginPath();
-            canvasDataStore = canvas.toDataURL(); // Zapamti stanje
+            canvasDataStore = canvas.toDataURL();
         }
     }
 
@@ -730,7 +730,6 @@ function initCanvas() {
     canvas.addEventListener('touchend', endPosition);
     canvas.addEventListener('touchmove', (e) => { draw(e); e.preventDefault(); });
 
-    // Dugme za čuvanje i sinhronizaciju crteža
     document.getElementById('sync-canvas-btn').addEventListener('click', () => {
         canvasDataStore = canvas.toDataURL();
         saveDataToGitHub();
