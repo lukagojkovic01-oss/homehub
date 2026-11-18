@@ -10,14 +10,7 @@
       "pin": "1670"
     }
   ],
-  "shopping": [
-    {
-      "id": 1795017268825,
-      "text": "mleko",
-      "assignee": "Luka",
-      "completed": false
-    }
-  ],
+  "shopping": [],
   "todo": [
     {
       "id": 1795017287316,
