@@ -5,7 +5,14 @@
       "pin": "1670"
     }
   ],
-  "shopping": [],
+  "shopping": [
+    {
+      "id": 1795020099458,
+      "text": "Pur",
+      "assignee": "Luka",
+      "completed": false
+    }
+  ],
   "todo": [],
   "events": [],
   "expenses": [],
