@@ -11,14 +11,7 @@
     }
   ],
   "shopping": [],
-  "todo": [
-    {
-      "id": 1795017287316,
-      "text": "Ocisti kucu",
-      "assignee": "marko",
-      "completed": false
-    }
-  ],
+  "todo": [],
   "events": [],
   "expenses": [],
   "limit": 300
