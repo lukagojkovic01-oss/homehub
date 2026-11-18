@@ -4,15 +4,12 @@
       "name": "marko",
       "pin": "",
       "personalLimit": 1000
-    },
-    {
-      "name": "Luka",
-      "pin": "1670"
     }
   ],
   "shopping": [],
   "todo": [],
   "events": [],
   "expenses": [],
-  "limit": 300
+  "limit": 300,
+  "canvasData": ""
 }
