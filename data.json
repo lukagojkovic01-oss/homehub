@@ -27,14 +27,6 @@
     }
   ],
   "events": [],
-  "expenses": [
-    {
-      "id": 1795017339328,
-      "text": "Krompir",
-      "amount": 4.99,
-      "category": "hrana",
-      "payer": "marko"
-    }
-  ],
+  "expenses": [],
   "limit": 300
 }
