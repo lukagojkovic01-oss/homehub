@@ -1,0 +1,9 @@
+{
+  "accounts": [],
+  "currentUser": null,
+  "shopping": [],
+  "todo": [],
+  "events": [],
+  "expenses": [],
+  "limit": 500
+}
