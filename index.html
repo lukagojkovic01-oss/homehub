@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HomeHub - Kućni Centar</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="background-glow"></div>
+
+    <div class="app-container">
+        <!-- HEADER SA LOKALNIM PROFILIMA -->
+        <header class="glass-card header-card">
+            <div class="header-left">
+                <span class="badge">HOMEHUB</span>
+                <h1>Dobrodošli kući</h1>
+                <p id="current-date">Sreda, 18. Novembar 2026.</p>
+            </div>
+            
+            <div class="header-right">
+                <div class="live-clock" id="live-clock">13:27:00</div>
+                
+                <!-- Sistem lokalnih naloga -->
+                <div class="user-profile-section" id="auth-section">
+                    <!-- Prikaz kada NIKO nije prijavljen -->
+                    <div id="logged-out-controls" class="auth-controls">
+                        <select id="profile-selector" class="profile-select">
+                            <option value="">Izaberi nalog...</option>
+                        </select>
+                        <button id="login-profile-btn" class="action-btn">Prijavi se</button>
+                        <button id="create-profile-btn" class="secondary-btn" title="Napravi novi nalog">+ Novi</button>
+                    </div>
+
+                    <!-- Prikaz kada JE korisnik prijavljen -->
+                    <div id="user-info" class="user-info hidden">
+                        <div class="avatar-circle" id="user-avatar-initial">K</div>
+                        <span id="user-name">Korisnik</span>
+                        <button id="logout-btn" title="Odjavi se">Odjava</button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- BENTO GRID SA PROVIDNIM WIDGETIMA -->
+        <main class="bento-grid">
+            
+            <!-- 1. SPISAK ZA KUPOVINU -->
+            <section class="glass-card bento-card">
+                <div class="card-header">
+                    <h2>Spisak za kupovinu</h2>
+                    <span class="counter" id="shop-counter">0 stavki</span>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="shop-input" placeholder="Npr. mleko, hleb, jaja...">
+                    <select id="shop-assignee" class="assign-select">
+                        <option value="Svi">Svi</option>
+                    </select>
+                    <button id="shop-add-btn" class="action-btn">Dodaj</button>
+                </div>
+                <ul id="shop-list" class="item-list"></ul>
+            </section>
+
+            <!-- 2. KUĆNE OBAVEZE (TO-DO) -->
+            <section class="glass-card bento-card">
+                <div class="card-header">
+                    <h2>Kućne obaveze (To-Do)</h2>
+                    <span class="counter" id="todo-counter">0 zadataka</span>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="todo-input" placeholder="Npr. usisati dnevnu sobu...">
+                    <select id="todo-assignee" class="assign-select">
+                        <option value="Svi">Svi</option>
+                    </select>
+                    <button id="todo-add-btn" class="action-btn">Dodaj</button>
+                </div>
+                <ul id="todo-list" class="item-list"></ul>
+            </section>
+
+            <!-- 3. BITNI DOGAĐAJI I KALENDAR -->
+            <section class="glass-card bento-card">
+                <div class="card-header">
+                    <h2>Bitni događaji</h2>
+                    <span class="counter" id="event-counter">0 događaja</span>
+                </div>
+                <div class="input-group event-inputs">
+                    <input type="text" id="event-input" placeholder="Naziv događaja...">
+                    <input type="date" id="event-date">
+                    <select id="event-category" class="assign-select">
+                        <option value="hitno">🔴 Hitno</option>
+                        <option value="rodjendan">🟢 Rođendan</option>
+                        <option value="ostalo">🔵 Ostalo</option>
+                    </select>
+                    <button id="event-add-btn" class="action-btn">Dodaj</button>
+                </div>
+                <ul id="event-list" class="item-list"></ul>
+            </section>
+
+            <!-- 4. ZAJEDNIČKI KUĆNI BUDŽET -->
+            <section class="glass-card bento-card">
+                <div class="card-header">
+                    <h2>Zajednički budžet</h2>
+                    <div class="budget-info">
+                        <span>Limit: <strong id="limit-display">500</strong>€</span>
+                        <button id="set-limit-btn" class="small-btn" title="Promeni zajednički limit">⚙️</button>
+                    </div>
+                </div>
+                <div class="budget-summary-bar">
+                    <div>Potrošeno: <strong id="total-expense">0.00</strong> €</div>
+                    <div>Preostalo: <strong id="budget-left">500.00</strong> €</div>
+                </div>
+                <div class="input-group expense-inputs">
+                    <input type="text" id="expense-input" placeholder="Opis troška...">
+                    <input type="number" id="expense-amount" placeholder="Iznos €">
+                    <select id="expense-category" class="assign-select">
+                        <option value="hrana">🛒 Hrana</option>
+                        <option value="racuni">💡 Računi</option>
+                        <option value="gorivo">⛽ Gorivo</option>
+                        <option value="stan">🏠 Stan</option>
+                        <option value="zabava">🎉 Zabava</option>
+                        <option value="ostalo">📦 Ostalo</option>
+                    </select>
+                    <select id="expense-payer" class="assign-select"></select>
+                    <button id="expense-add-btn" class="action-btn">Dodaj</button>
+                </div>
+                <ul id="expense-list" class="item-list"></ul>
+            </section>
+
+            <!-- 5. LIČNI / INDIVIDUALNI BUDŽET (PRIVATNO PO NALOGU) -->
+            <section class="glass-card bento-card">
+                <div class="card-header">
+                    <h2 id="personal-budget-title">Lični budžet</h2>
+                    <div class="budget-info" id="personal-budget-controls">
+                        <span>Limit: <strong id="personal-limit-display">200</strong>€</span>
+                        <button id="set-personal-limit-btn" class="small-btn" title="Promeni lični limit">⚙️</button>
+                    </div>
+                </div>
+                
+                <!-- Prikazuje se ako korisnik NIJE prijavljen -->
+                <div id="personal-login-prompt" style="text-align:center; padding:40px 10px; color:#94a3b8; font-size:14px;">
+                    Izaberi svoj nalog ili napravi novi u gornjem desnom uglu da otključaš svoj privatni budžet.
+                </div>
+
+                <!-- Prikazuje se kada JE korisnik prijavljen -->
+                <div id="personal-budget-content" class="hidden" style="display:flex; flex-direction:column; gap:16px;">
+                    <div class="budget-summary-bar">
+                        <div>Potrošeno: <strong id="personal-total-expense">0.00</strong> €</div>
+                        <div>Preostalo: <strong id="personal-budget-left">200.00</strong> €</div>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="personal-expense-input" placeholder="Lični trošak (npr. kafa, hobi...)">
+                        <input type="number" id="personal-expense-amount" placeholder="Iznos €">
+                        <button id="personal-expense-add-btn" class="action-btn">Dodaj</button>
+                    </div>
+                    <ul id="personal-expense-list" class="item-list"></ul>
+                </div>
+            </section>
+
+            <!-- 6. INTERAKTIVNA TABLA ZA CRTANJE I PORUKE -->
+            <section class="glass-card bento-card">
+                <div class="card-header">
+                    <h2>Zajednička tabla (Crtanje & Poruke)</h2>
+                    <button id="clear-canvas-btn" class="small-btn">Obriši tablu</button>
+                </div>
+                <div class="canvas-container">
+                    <canvas id="drawing-canvas"></canvas>
+                </div>
+                <p class="canvas-hint">Pišite ili crtajte prstom/mišem direktno na tabli.</p>
+            </section>
+
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
