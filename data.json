@@ -11,12 +11,6 @@
   ],
   "shopping": [
     {
-      "id": 1795016196760,
-      "text": "mleko",
-      "assignee": "Luka",
-      "completed": true
-    },
-    {
       "id": 1795016210077,
       "text": "Krompir",
       "assignee": "marko",
