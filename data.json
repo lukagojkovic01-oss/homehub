@@ -6,7 +6,14 @@
       "personalLimit": 1500
     }
   ],
-  "shopping": [],
+  "shopping": [
+    {
+      "id": 1795018282390,
+      "text": "Krompir",
+      "assignee": "Domagoj",
+      "completed": false
+    }
+  ],
   "todo": [],
   "events": [
     {
