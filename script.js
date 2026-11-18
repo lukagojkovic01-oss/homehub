@@ -99,13 +99,14 @@ async function loadDataFromGitHub(isBackground = false) {
             
             window.ghFileSha = fileData.sha;
 
-            // Uvek osveži prikaz kada stignu novi podaci
-            populateProfileSelector();
-            renderShopping();
-            renderTodos();
-            renderEvents();
-            renderExpenses();
-            renderPersonalBudget();
+            if (isBackground) {
+                populateProfileSelector();
+                renderShopping();
+                renderTodos();
+                renderEvents();
+                renderExpenses();
+                renderPersonalBudget();
+            }
         }
     } catch (e) {
         console.log("Greška pri učitavanju sa GitHub-a.", e);
@@ -116,13 +117,11 @@ async function saveDataToGitHub() {
     try {
         const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE_PATH}`;
         
-        // Prvo uzmi najsvežiji SHA da sprečimo konflikt
+        // UVEK uzmi najsvežiji SHA sa servera neposredno pre slanja da sprečimo 409 Conflict
         const getRes = await fetch(url, { headers: { 'Authorization': `token ${GH_TOKEN}`, 'Cache-Control': 'no-cache' } });
-        let sha = window.ghFileSha;
         if (getRes.ok) {
             const fileData = await getRes.json();
-            sha = fileData.sha;
-            window.ghFileSha = sha;
+            window.ghFileSha = fileData.sha;
         }
 
         const dataObject = {
@@ -138,9 +137,9 @@ async function saveDataToGitHub() {
         const encodedContent = btoa(unescape(encodeURIComponent(jsonString)));
 
         const bodyData = {
-            message: "HomeHub instant sync update",
+            message: "HomeHub auto-sync update",
             content: encodedContent,
-            sha: sha
+            sha: window.ghFileSha
         };
 
         const putRes = await fetch(url, {
@@ -155,7 +154,8 @@ async function saveDataToGitHub() {
         if (putRes.ok) {
             const resJson = await putRes.json();
             window.ghFileSha = resJson.content.sha;
-            // Odmah povuci podatke da osvežiš stanje i osiguraš sinhronizaciju
+        } else {
+            console.log("Konflikt detektovan, osvežavam podatke...");
             await loadDataFromGitHub(true);
         }
     } catch (e) {
