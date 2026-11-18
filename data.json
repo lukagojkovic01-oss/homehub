@@ -34,13 +34,6 @@
       "amount": 4.99,
       "category": "hrana",
       "payer": "marko"
-    },
-    {
-      "id": 1795017372129,
-      "text": "Sanitol",
-      "amount": 5.37,
-      "category": "hrana",
-      "payer": "marko"
     }
   ],
   "limit": 300
