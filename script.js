@@ -1,18 +1,26 @@
-// --- UČITAVANJE I STANJE APLIKACIJE ---
-let registeredAccounts = JSON.parse(localStorage.getItem('homehub_accounts')) || [];
-let currentUser = JSON.parse(localStorage.getItem('homehub_user')) || null;
+// --- GITHUB API KONFIGURACIJA ZA SINHRONIZACIJU ---
+const GH_OWNER = "lukagojkovic01-oss";
+const GH_REPO = "homehub";
+const GH_FILE_PATH = "data.json";
+const GH_TOKEN = "TVOJ_TOKEN_OVDE"; // Ubaci ovde tvoj ghp_... token
 
-let shoppingList = JSON.parse(localStorage.getItem('homehub_shop')) || [];
-let todoList = JSON.parse(localStorage.getItem('homehub_todo')) || [];
-let eventList = JSON.parse(localStorage.getItem('homehub_events')) || [];
-let expenseList = JSON.parse(localStorage.getItem('homehub_expenses')) || [];
-let monthlyLimit = parseFloat(localStorage.getItem('homehub_limit')) || 500;
-
+// --- STANJE APLIKACIJE ---
+let registeredAccounts = [];
+let currentUser = null;
+let shoppingList = [];
+let todoList = [];
+let eventList = [];
+let expenseList = [];
+let monthlyLimit = 500;
 let assignableMembers = ["Svi"];
 
-// --- INICIJALIZACIJA PRI UČITAVANJU ---
-document.addEventListener('DOMContentLoaded', () => {
+// --- INICIJALIZACIJA ---
+document.addEventListener('DOMContentLoaded', async () => {
     initClock();
+    
+    // Učitaj podatke sa GitHub-a pre pokretanja interfejsa
+    await loadDataFromGitHub();
+
     populateProfileSelector();
     initAuth();
     
@@ -22,22 +30,110 @@ document.addEventListener('DOMContentLoaded', () => {
     renderExpenses();
     initCanvas();
 
-    // Event listeneri za module
+    // Event listeneri
     document.getElementById('shop-add-btn').addEventListener('click', addShoppingItem);
     document.getElementById('todo-add-btn').onclick = addTodoItem;
     document.getElementById('event-add-btn').addEventListener('click', addEventItem);
     document.getElementById('expense-add-btn').addEventListener('click', addExpenseItem);
     document.getElementById('set-limit-btn').addEventListener('click', changeMonthlyLimit);
 
-    // Lični budžet listeneri
     document.getElementById('personal-expense-add-btn').addEventListener('click', addPersonalExpenseItem);
     document.getElementById('set-personal-limit-btn').addEventListener('click', changePersonalLimit);
 
-    // Lokalni nalozi listeneri
     document.getElementById('create-profile-btn').addEventListener('click', createLocalAccount);
     document.getElementById('login-profile-btn').addEventListener('click', loginLocalAccount);
     document.getElementById('logout-btn').addEventListener('click', logoutLocalAccount);
+
+    // Automatska provera osveženja sa GitHub-a svakih 10 sekundi
+    setInterval(async () => {
+        await loadDataFromGitHub(true);
+    }, 10000);
 });
+
+// --- GITHUB API: UČITAVANJE I ČUVANJE ---
+async function loadDataFromGitHub(isBackground = false) {
+    try {
+        const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE_PATH}`;
+        const response = await fetch(url, {
+            headers: { 'Authorization': `token ${GH_TOKEN}` }
+        });
+
+        if (response.ok) {
+            const fileData = await response.json();
+            const decodedContent = JSON.parse(decodeURIComponent(escape(atob(fileData.content))));
+            
+            registeredAccounts = decodedContent.accounts || [];
+            currentUser = decodedContent.currentUser || null;
+            shoppingList = decodedContent.shopping || [];
+            todoList = decodedContent.todo || [];
+            eventList = decodedContent.events || [];
+            expenseList = decodedContent.expenses || [];
+            monthlyLimit = decodedContent.limit || 500;
+            
+            window.ghFileSha = fileData.sha;
+
+            if (isBackground) {
+                populateProfileSelector();
+                renderShopping();
+                renderTodos();
+                renderEvents();
+                renderExpenses();
+                renderPersonalBudget();
+            }
+        }
+    } catch (e) {
+        console.log("Greška pri učitavanju sa GitHub-a.", e);
+    }
+}
+
+async function saveDataToGitHub() {
+    try {
+        const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE_PATH}`;
+        
+        const getRes = await fetch(url, { headers: { 'Authorization': `token ${GH_TOKEN}` } });
+        let sha = window.ghFileSha;
+        if (getRes.ok) {
+            const fileData = await getRes.json();
+            sha = fileData.sha;
+            window.ghFileSha = sha;
+        }
+
+        const dataObject = {
+            accounts: registeredAccounts,
+            currentUser: currentUser,
+            shopping: shoppingList,
+            todo: todoList,
+            events: eventList,
+            expenses: expenseList,
+            limit: monthlyLimit
+        };
+
+        const jsonString = JSON.stringify(dataObject, null, 2);
+        const encodedContent = btoa(unescape(encodeURIComponent(jsonString)));
+
+        const bodyData = {
+            message: "HomeHub auto-sync update",
+            content: encodedContent,
+            sha: sha
+        };
+
+        const putRes = await fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `token ${GH_TOKEN}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(bodyData)
+        });
+
+        if (putRes.ok) {
+            const resJson = await putRes.json();
+            window.ghFileSha = resJson.content.sha;
+        }
+    } catch (e) {
+        console.log("Greška pri snimanju na GitHub:", e);
+    }
+}
 
 // --- SAT I DATUM (LATINICA) ---
 function initClock() {
@@ -62,9 +158,10 @@ function initClock() {
     setInterval(update, 1000);
 }
 
-// --- SISTEM LOKALNIH NALOGA (BEZ GOOGLE-A) ---
+// --- SISTEM NALOGA ---
 function populateProfileSelector() {
     const selector = document.getElementById('profile-selector');
+    if(!selector) return;
     selector.innerHTML = '<option value="">Izaberi nalog...</option>';
     
     registeredAccounts.forEach(acc => {
@@ -76,35 +173,30 @@ function populateProfileSelector() {
 }
 
 function createLocalAccount() {
-    const rawName = prompt("Unesite ime za novi nalog (npr. Marko, Ana):");
+    const rawName = prompt("Unesite ime za novi nalog (npr. Marko, Luka):");
     if (!rawName || !rawName.trim()) return;
     
     const name = rawName.trim();
     if (registeredAccounts.some(acc => acc.name.toLowerCase() === name.toLowerCase())) {
-        alert("Nalog sa tim imenom već postoji! Izaberite ga iz liste.");
+        alert("Nalog sa tim imenom već postoji!");
         return;
     }
 
-    const rawPin = prompt(`Postavite PIN šifru za nalog "${name}" radi privatnosti ličnog budžeta (ostavite prazno ako ne želite šifru):`);
+    const rawPin = prompt(`Postavite PIN šifru za nalog "${name}" (ostavite prazno bez šifre):`);
     const pin = rawPin ? rawPin.trim() : "";
 
     const newAccount = { name, pin };
     registeredAccounts.push(newAccount);
-    localStorage.setItem('homehub_accounts', JSON.stringify(registeredAccounts));
-
     currentUser = newAccount;
-    localStorage.setItem('homehub_user', JSON.stringify(currentUser));
     
     populateProfileSelector();
     initAuth();
+    saveDataToGitHub();
 }
 
 function loginLocalAccount() {
     const selectedName = document.getElementById('profile-selector').value;
-    if (!selectedName) {
-        alert("Prvo izaberite nalog iz liste ili kliknite na '+ Novi'.");
-        return;
-    }
+    if (!selectedName) return;
 
     const account = registeredAccounts.find(acc => acc.name === selectedName);
     if (!account) return;
@@ -112,21 +204,21 @@ function loginLocalAccount() {
     if (account.pin) {
         const enteredPin = prompt(`Unesite PIN šifru za nalog "${account.name}":`);
         if (enteredPin !== account.pin) {
-            alert("Pogrešan PIN! Pristup odbijen.");
+            alert("Pogrešan PIN!");
             return;
         }
     }
 
     currentUser = account;
-    localStorage.setItem('homehub_user', JSON.stringify(currentUser));
     initAuth();
+    saveDataToGitHub();
 }
 
 function logoutLocalAccount() {
-    localStorage.removeItem('homehub_user');
     currentUser = null;
     populateProfileSelector();
     initAuth();
+    saveDataToGitHub();
 }
 
 function initAuth() {
@@ -142,7 +234,6 @@ function initAuth() {
         userInfo.classList.remove('hidden');
         avatarInitial.textContent = currentUser.name.charAt(0);
         userName.textContent = currentUser.name;
-        
         assignableMembers.push(currentUser.name);
     } else {
         loggedOutControls.classList.remove('hidden');
@@ -159,19 +250,14 @@ function updateAssignDropdowns() {
         const select = document.getElementById(id);
         if(!select) return;
         select.innerHTML = '';
-        
         assignableMembers.forEach(member => {
             const opt = document.createElement('option');
             opt.value = member;
             opt.textContent = member;
             select.appendChild(opt);
         });
-        
-        if (currentUser) {
-            select.value = currentUser.name;
-        } else {
-            select.value = "Svi";
-        }
+        if (currentUser) select.value = currentUser.name;
+        else select.value = "Svi";
     });
 }
 
@@ -197,13 +283,14 @@ function deleteShop(id) {
 }
 
 function saveAndRenderShop() {
-    localStorage.setItem('homehub_shop', JSON.stringify(shoppingList));
     renderShopping();
+    saveDataToGitHub();
 }
 
 function renderShopping() {
     const listEl = document.getElementById('shop-list');
     const counterEl = document.getElementById('shop-counter');
+    if(!listEl) return;
     listEl.innerHTML = '';
     counterEl.textContent = `${shoppingList.length} stavki`;
 
@@ -227,7 +314,7 @@ function renderShopping() {
     });
 }
 
-// --- 2. KUĆNE OBAVEZE (TO-DO) ---
+// --- 2. TO-DO ---
 function addTodoItem() {
     const input = document.getElementById('todo-input');
     const assignee = document.getElementById('todo-assignee').value;
@@ -249,13 +336,14 @@ function deleteTodo(id) {
 }
 
 function saveAndRenderTodo() {
-    localStorage.setItem('homehub_todo', JSON.stringify(todoList));
     renderTodos();
+    saveDataToGitHub();
 }
 
 function renderTodos() {
     const listEl = document.getElementById('todo-list');
     const counterEl = document.getElementById('todo-counter');
+    if(!listEl) return;
     listEl.innerHTML = '';
     counterEl.textContent = `${todoList.length} zadataka`;
 
@@ -279,7 +367,7 @@ function renderTodos() {
     });
 }
 
-// --- 3. BITNI DOGAĐAJI ---
+// --- 3. DOGAĐAJI ---
 function addEventItem() {
     const input = document.getElementById('event-input');
     const dateInput = document.getElementById('event-date');
@@ -301,13 +389,14 @@ function deleteEvent(id) {
 }
 
 function saveAndRenderEvents() {
-    localStorage.setItem('homehub_events', JSON.stringify(eventList));
     renderEvents();
+    saveDataToGitHub();
 }
 
 function renderEvents() {
     const listEl = document.getElementById('event-list');
     const counterEl = document.getElementById('event-counter');
+    if(!listEl) return;
     listEl.innerHTML = '';
     counterEl.textContent = `${eventList.length} događaja`;
 
@@ -340,7 +429,7 @@ function renderEvents() {
     });
 }
 
-// --- 4. ZAJEDNIČKI KUĆNI BUDŽET ---
+// --- 4. ZAJEDNIČKI BUDŽET ---
 function addExpenseItem() {
     const input = document.getElementById('expense-input');
     const amountInput = document.getElementById('expense-amount');
@@ -364,14 +453,13 @@ function changeMonthlyLimit() {
     const newLimit = prompt("Unesite novi mesečni limit zajedničkog budžeta (€):", monthlyLimit);
     if (newLimit !== null && !isNaN(newLimit) && newLimit > 0) {
         monthlyLimit = parseFloat(newLimit);
-        localStorage.setItem('homehub_limit', monthlyLimit);
-        renderExpenses();
+        saveAndRenderExpenses();
     }
 }
 
 function saveAndRenderExpenses() {
-    localStorage.setItem('homehub_expenses', JSON.stringify(expenseList));
     renderExpenses();
+    saveDataToGitHub();
 }
 
 function renderExpenses() {
@@ -379,6 +467,7 @@ function renderExpenses() {
     const totalEl = document.getElementById('total-expense');
     const limitDisplay = document.getElementById('limit-display');
     const leftEl = document.getElementById('budget-left');
+    if(!listEl) return;
     
     listEl.innerHTML = '';
     limitDisplay.textContent = monthlyLimit;
@@ -388,24 +477,22 @@ function renderExpenses() {
 
     totalEl.textContent = total.toFixed(2);
     leftEl.textContent = left.toFixed(2) + ' €';
-
     leftEl.style.color = left < 0 ? '#f87171' : '#34d399';
 
     if (expenseList.length === 0) {
-        listEl.innerHTML = '<p style="color:#64748b; font-size:13px; text-align:center; padding:20px;">Nema unetih troškova ovog meseca.</p>';
+        listEl.innerHTML = '<p style="color:#64748b; font-size:13px; text-align:center; padding:20px;">Nema unetih troškova.</p>';
         return;
     }
 
     expenseList.forEach(item => {
         const li = document.createElement('li');
         li.className = 'item-row';
-        
         const catIcons = { hrana: '🛒', racuni: '💡', gorivo: '⛽', stan: '🏠', zabava: '🎉', ostalo: '📦' };
         const icon = catIcons[item.category] || '💰';
 
         li.innerHTML = `
             <div class="item-content" style="cursor:default;">
-                <span style="font-size:14px;" title="${item.category}">${icon}</span>
+                <span style="font-size:14px;">${icon}</span>
                 <span style="flex:1;">${item.text}</span>
                 <strong style="color:#34d399;">${item.amount.toFixed(2)} €</strong>
                 <span class="tag-assigned">${item.payer}</span>
@@ -416,17 +503,7 @@ function renderExpenses() {
     });
 }
 
-// --- 5. LIČNI / INDIVIDUALNI BUDŽET PO KORISNIKU (STROGO IZOLOVANO) ---
-function getPersonalData() {
-    if (!currentUser) return { expenses: [], limit: 200 };
-    const keyExp = `homehub_personal_exp_${currentUser.name}`;
-    const keyLim = `homehub_personal_lim_${currentUser.name}`;
-    return {
-        expenses: JSON.parse(localStorage.getItem(keyExp)) || [],
-        limit: parseFloat(localStorage.getItem(keyLim)) || 200
-    };
-}
-
+// --- 5. LIČNI BUDŽET PO KORISNIKU ---
 function addPersonalExpenseItem() {
     if (!currentUser) return;
     const input = document.getElementById('personal-expense-input');
@@ -434,30 +511,30 @@ function addPersonalExpenseItem() {
 
     if (!input.value.trim() || !amountInput.value) return;
 
-    const data = getPersonalData();
-    data.expenses.push({ id: Date.now(), text: input.value.trim(), amount: parseFloat(amountInput.value) });
+    if (!currentUser.personalExpenses) currentUser.personalExpenses = [];
+    currentUser.personalExpenses.push({ id: Date.now(), text: input.value.trim(), amount: parseFloat(amountInput.value) });
     
-    localStorage.setItem(`homehub_personal_exp_${currentUser.name}`, JSON.stringify(data.expenses));
     input.value = '';
     amountInput.value = '';
     renderPersonalBudget();
+    saveDataToGitHub();
 }
 
 function deletePersonalExpense(id) {
-    if (!currentUser) return;
-    const data = getPersonalData();
-    const updated = data.expenses.filter(item => item.id !== id);
-    localStorage.setItem(`homehub_personal_exp_${currentUser.name}`, JSON.stringify(updated));
+    if (!currentUser || !currentUser.personalExpenses) return;
+    currentUser.personalExpenses = currentUser.personalExpenses.filter(item => item.id !== id);
     renderPersonalBudget();
+    saveDataToGitHub();
 }
 
 function changePersonalLimit() {
     if (!currentUser) return;
-    const data = getPersonalData();
-    const newLimit = prompt(`Unesite lični mesečni limit za profil (${currentUser.name}) u evrima (€):`, data.limit);
+    const currentLimit = currentUser.personalLimit || 200;
+    const newLimit = prompt(`Unesite lični mesečni limit za profil (${currentUser.name}) u €:`, currentLimit);
     if (newLimit !== null && !isNaN(newLimit) && newLimit > 0) {
-        localStorage.setItem(`homehub_personal_lim_${currentUser.name}`, parseFloat(newLimit));
+        currentUser.personalLimit = parseFloat(newLimit);
         renderPersonalBudget();
+        saveDataToGitHub();
     }
 }
 
@@ -466,6 +543,7 @@ function renderPersonalBudget() {
     const controlsEl = document.getElementById('personal-budget-controls');
     const promptEl = document.getElementById('personal-login-prompt');
     const contentEl = document.getElementById('personal-budget-content');
+    if(!titleEl) return;
 
     if (!currentUser) {
         titleEl.textContent = "Lični budžet";
@@ -480,28 +558,30 @@ function renderPersonalBudget() {
     promptEl.classList.add('hidden');
     contentEl.classList.remove('hidden');
 
-    const data = getPersonalData();
+    const expenses = currentUser.personalExpenses || [];
+    const limit = currentUser.personalLimit || 200;
+
     const listEl = document.getElementById('personal-expense-list');
     const totalEl = document.getElementById('personal-total-expense');
     const limitDisplay = document.getElementById('personal-limit-display');
     const leftEl = document.getElementById('personal-budget-left');
 
     listEl.innerHTML = '';
-    limitDisplay.textContent = data.limit;
+    limitDisplay.textContent = limit;
 
-    let total = data.expenses.reduce((sum, item) => sum + item.amount, 0);
-    let left = data.limit - total;
+    let total = expenses.reduce((sum, item) => sum + item.amount, 0);
+    let left = limit - total;
 
     totalEl.textContent = total.toFixed(2);
     leftEl.textContent = left.toFixed(2) + ' €';
     leftEl.style.color = left < 0 ? '#f87171' : '#34d399';
 
-    if (data.expenses.length === 0) {
+    if (expenses.length === 0) {
         listEl.innerHTML = '<p style="color:#64748b; font-size:13px; text-align:center; padding:20px;">Nema unetih ličnih troškova.</p>';
         return;
     }
 
-    data.expenses.forEach(item => {
+    expenses.forEach(item => {
         const li = document.createElement('li');
         li.className = 'item-row';
         li.innerHTML = `
@@ -515,50 +595,25 @@ function renderPersonalBudget() {
     });
 }
 
-// --- 6. INTERAKTIVNA TABLA ZA CRTANJE (CANVAS) ---
+// --- 6. TABLA ZA CRTANJE ---
 function initCanvas() {
     const canvas = document.getElementById('drawing-canvas');
+    if(!canvas) return;
     const ctx = canvas.getContext('2d');
     
     function resizeCanvas() {
         const rect = canvas.parentElement.getBoundingClientRect();
         canvas.width = rect.width;
         canvas.height = rect.height;
-        
-        const savedDrawing = localStorage.getItem('homehub_drawing');
-        if (savedDrawing) {
-            const img = new Image();
-            img.onload = () => ctx.drawImage(img, 0, 0);
-            img.src = savedDrawing;
-        }
     }
-    
     resizeCanvas();
-    window.addEventListener('resize', () => {
-        const dataURL = canvas.toDataURL();
-        canvas.width = canvas.parentElement.clientWidth;
-        canvas.height = canvas.parentElement.clientHeight;
-        const img = new Image();
-        img.onload = () => ctx.drawImage(img, 0, 0);
-        img.src = dataURL;
-    });
 
     let painting = false;
-
-    function startPosition(e) {
-        painting = true;
-        draw(e);
-    }
-
-    function endPosition() {
-        painting = false;
-        ctx.beginPath();
-        localStorage.setItem('homehub_drawing', canvas.toDataURL());
-    }
+    function startPosition(e) { painting = true; draw(e); }
+    function endPosition() { painting = false; ctx.beginPath(); }
 
     function draw(e) {
         if (!painting) return;
-
         ctx.lineWidth = 3;
         ctx.lineCap = 'round';
         ctx.strokeStyle = '#38bdf8';
@@ -576,13 +631,11 @@ function initCanvas() {
     canvas.addEventListener('mousedown', startPosition);
     canvas.addEventListener('mouseup', endPosition);
     canvas.addEventListener('mousemove', draw);
-
     canvas.addEventListener('touchstart', (e) => { startPosition(e); e.preventDefault(); });
     canvas.addEventListener('touchend', endPosition);
     canvas.addEventListener('touchmove', (e) => { draw(e); e.preventDefault(); });
 
     document.getElementById('clear-canvas-btn').addEventListener('click', () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        localStorage.removeItem('homehub_drawing');
     });
 }
