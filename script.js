@@ -64,7 +64,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 // --- GITHUB API: UČITAVANJE I ČUVANJE ---
 async function loadDataFromGitHub(isBackground = false) {
     try {
-        const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE_PATH}`;
+        // Dodajemo ?t=... sa vremenskim žigom da pretraživač nikada ne kešira odgovor
+        const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE_PATH}?t=${new Date().getTime()}`;
         const response = await fetch(url, {
             headers: { 'Authorization': `token ${GH_TOKEN}` }
         });
@@ -118,7 +119,7 @@ async function saveDataToGitHub() {
         const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE_PATH}`;
         
         // Uzmi najsvežiji SHA sa servera neposredno pre slanja
-        const getRes = await fetch(url, { headers: { 'Authorization': `token ${GH_TOKEN}` } });
+        const getRes = await fetch(`${url}?t=${new Date().getTime()}`, { headers: { 'Authorization': `token ${GH_TOKEN}` } });
         if (getRes.ok) {
             const fileData = await getRes.json();
             window.ghFileSha = fileData.sha;
