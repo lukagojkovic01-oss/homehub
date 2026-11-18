@@ -9,7 +9,14 @@
       "pin": "1670"
     }
   ],
-  "shopping": [],
+  "shopping": [
+    {
+      "id": 1795015577459,
+      "text": "Hleb",
+      "assignee": "marko",
+      "completed": false
+    }
+  ],
   "todo": [],
   "events": [],
   "expenses": [],
