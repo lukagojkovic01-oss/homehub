@@ -1,13 +1,6 @@
 {
   "accounts": [],
-  "shopping": [
-    {
-      "id": 1795018282390,
-      "text": "Krompir",
-      "assignee": "Domagoj",
-      "completed": false
-    }
-  ],
+  "shopping": [],
   "todo": [],
   "events": [
     {
