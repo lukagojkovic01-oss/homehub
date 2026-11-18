@@ -5,11 +5,7 @@
       "pin": ""
     }
   ],
-  "currentUser": {
-    "name": "marko",
-    "pin": "",
-    "personalLimit": 1000
-  },
+  "currentUser": null,
   "shopping": [
     {
       "id": 1795014969524,
