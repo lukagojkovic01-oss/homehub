@@ -9,7 +9,14 @@
     "name": "Luka",
     "pin": "1670"
   },
-  "shopping": [],
+  "shopping": [
+    {
+      "id": 1795014848909,
+      "text": "mleko",
+      "assignee": "Luka",
+      "completed": false
+    }
+  ],
   "todo": [],
   "events": [],
   "expenses": [],
