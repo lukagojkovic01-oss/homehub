@@ -9,20 +9,7 @@
       "pin": "1670"
     }
   ],
-  "shopping": [
-    {
-      "id": 1795016210077,
-      "text": "Krompir",
-      "assignee": "marko",
-      "completed": true
-    },
-    {
-      "id": 1795016239673,
-      "text": "jaja",
-      "assignee": "Luka",
-      "completed": true
-    }
-  ],
+  "shopping": [],
   "todo": [],
   "events": [],
   "expenses": [],
