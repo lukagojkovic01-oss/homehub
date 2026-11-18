@@ -1,22 +1,15 @@
 {
   "accounts": [
     {
-      "name": "Luka",
-      "pin": "1670"
+      "name": "marko",
+      "pin": ""
     }
   ],
   "currentUser": {
-    "name": "Luka",
-    "pin": "1670"
+    "name": "marko",
+    "pin": ""
   },
-  "shopping": [
-    {
-      "id": 1795014848909,
-      "text": "mleko",
-      "assignee": "Luka",
-      "completed": false
-    }
-  ],
+  "shopping": [],
   "todo": [],
   "events": [],
   "expenses": [],
