@@ -64,7 +64,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 // --- GITHUB API: UČITAVANJE I ČUVANJE ---
 async function loadDataFromGitHub(isBackground = false) {
     try {
-        // Dodajemo ?t=... sa vremenskim žigom da pretraživač nikada ne kešira odgovor
         const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE_PATH}?t=${new Date().getTime()}`;
         const response = await fetch(url, {
             headers: { 'Authorization': `token ${GH_TOKEN}` }
@@ -118,7 +117,7 @@ async function saveDataToGitHub() {
     try {
         const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE_PATH}`;
         
-        // Uzmi najsvežiji SHA sa servera neposredno pre slanja
+        // 1. Obavezno povuci najsvežiji SHA neposredno pre slanja
         const getRes = await fetch(`${url}?t=${new Date().getTime()}`, { headers: { 'Authorization': `token ${GH_TOKEN}` } });
         if (getRes.ok) {
             const fileData = await getRes.json();
@@ -143,7 +142,7 @@ async function saveDataToGitHub() {
             sha: window.ghFileSha
         };
 
-        const putRes = await fetch(url, {
+        let putRes = await fetch(url, {
             method: 'PUT',
             headers: {
                 'Authorization': `token ${GH_TOKEN}`,
@@ -152,12 +151,28 @@ async function saveDataToGitHub() {
             body: JSON.stringify(bodyData)
         });
 
+        // 2. AUTOMATSKI OPORAVAK: Ako se desi 409 konflikt, odmah osveži SHA i ponovi zahtev jednom automatski!
+        if (putRes.status === 409) {
+            const retryGet = await fetch(`${url}?t=${new Date().getTime()}`, { headers: { 'Authorization': `token ${GH_TOKEN}` } });
+            if (retryGet.ok) {
+                const retryData = await retryGet.json();
+                bodyData.sha = retryData.sha;
+                window.ghFileSha = retryData.sha;
+
+                putRes = await fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${GH_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(bodyData)
+                });
+            }
+        }
+
         if (putRes.ok) {
             const resJson = await putRes.json();
             window.ghFileSha = resJson.content.sha;
-        } else {
-            console.log("Konflikt detektovan, osvežavam podatke...");
-            await loadDataFromGitHub(true);
         }
     } catch (e) {
         console.log("Greška pri snimanju na GitHub:", e);
