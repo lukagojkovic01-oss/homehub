@@ -3,176 +3,371 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HomeHub - Kućni Centar</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>HomeHub — Kućni Dashboard</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --accent-hover: #0ea5e9;
+            --danger: #f87171;
+            --success: #34d399;
+            --border: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            padding: 15px 25px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 25px;
+        }
+
+        .clock-box h1 {
+            font-size: 28px;
+            color: var(--accent);
+        }
+
+        .clock-box p {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .auth-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        select, input, button {
+            background: #0f172a;
+            color: var(--text-color);
+            border: 1px solid var(--border);
+            padding: 8px 12px;
+            border-radius: 8px;
+            outline: none;
+        }
+
+        button {
+            background: var(--accent);
+            color: #0f172a;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            border: none;
+        }
+
+        button:hover {
+            background: var(--accent-hover);
+        }
+
+        .user-badge {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #0f172a;
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            background: var(--accent);
+            color: #0f172a;
+            font-weight: bold;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            height: 420px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        .card-header h3 {
+            font-size: 18px;
+        }
+
+        .counter {
+            font-size: 12px;
+            background: #0f172a;
+            padding: 3px 8px;
+            border-radius: 6px;
+            color: var(--text-muted);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .input-group input, .input-group select {
+            flex: 1;
+        }
+
+        .item-list {
+            list-style: none;
+            overflow-y: auto;
+            flex: 1;
+            padding-right: 5px;
+        }
+
+        .item-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #0f172a;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border: 1px solid #1e293b;
+        }
+
+        .item-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .item-content.completed span {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+
+        .tag-assigned {
+            font-size: 11px;
+            background: #334155;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--accent);
+        }
+
+        .delete-btn {
+            background: transparent;
+            color: var(--danger);
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 0 5px;
+        }
+
+        .delete-btn:hover {
+            color: #ef4444;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        canvas {
+            width: 100%;
+            flex: 1;
+            background: #0f172a;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            cursor: crosshair;
+        }
+    </style>
 </head>
 <body>
 
-    <div class="background-glow"></div>
-
-    <div class="app-container">
-        <!-- HEADER SA LOKALNIM PROFILIMA -->
-        <header class="glass-card header-card">
-            <div class="header-left">
-                <span class="badge">HOMEHUB</span>
-                <h1>Dobrodošli kući</h1>
-                <p id="current-date">Sreda, 18. Novembar 2026.</p>
+    <div class="container">
+        <!-- HEADER -->
+        <header>
+            <div class="clock-box">
+                <h1 id="live-clock">00:00:00</h1>
+                <p id="current-date">Učitavanje datuma...</p>
             </div>
-            
-            <div class="header-right">
-                <div class="live-clock" id="live-clock">13:27:00</div>
-                
-                <!-- Sistem lokalnih naloga -->
-                <div class="user-profile-section" id="auth-section">
-                    <!-- Prikaz kada NIKO nije prijavljen -->
-                    <div id="logged-out-controls" class="auth-controls">
-                        <select id="profile-selector" class="profile-select">
-                            <option value="">Izaberi nalog...</option>
-                        </select>
-                        <button id="login-profile-btn" class="action-btn">Prijavi se</button>
-                        <button id="create-profile-btn" class="secondary-btn" title="Napravi novi nalog">+ Novi</button>
-                    </div>
 
-                    <!-- Prikaz kada JE korisnik prijavljen -->
-                    <div id="user-info" class="user-info hidden">
-                        <div class="avatar-circle" id="user-avatar-initial">K</div>
-                        <span id="user-name">Korisnik</span>
-                        <button id="logout-btn" title="Odjavi se">Odjava</button>
-                    </div>
+            <div class="auth-box">
+                <div id="logged-out-controls" style="display: flex; gap: 8px;">
+                    <select id="profile-selector">
+                        <option value="">Izaberi nalog...</option>
+                    </select>
+                    <button id="login-profile-btn">Prijava</button>
+                    <button id="create-profile-btn">+ Novi nalog</button>
+                </div>
+
+                <div id="user-info" class="user-badge hidden">
+                    <div class="avatar" id="user-avatar-initial">U</div>
+                    <span id="user-name" style="font-weight: 600;">Korisnik</span>
+                    <button id="logout-btn" style="background: transparent; color: var(--danger); font-size: 13px; padding: 2px 6px;">Odjava</button>
                 </div>
             </div>
         </header>
 
-        <!-- BENTO GRID SA PROVIDNIM WIDGETIMA -->
-        <main class="bento-grid">
-            
+        <!-- GRID KARTICA -->
+        <div class="grid">
             <!-- 1. SPISAK ZA KUPOVINU -->
-            <section class="glass-card bento-card">
+            <div class="card">
                 <div class="card-header">
-                    <h2>Spisak za kupovinu</h2>
+                    <h3>🛒 Spisak za kupovinu</h3>
                     <span class="counter" id="shop-counter">0 stavki</span>
                 </div>
                 <div class="input-group">
-                    <input type="text" id="shop-input" placeholder="Npr. mleko, hleb, jaja...">
-                    <select id="shop-assignee" class="assign-select">
-                        <option value="Svi">Svi</option>
-                    </select>
-                    <button id="shop-add-btn" class="action-btn">Dodaj</button>
+                    <input type="text" id="shop-input" placeholder="Dodaj artikal...">
+                    <select id="shop-assignee" style="max-width: 100px;"></select>
+                    <button id="shop-add-btn">Dodaj</button>
                 </div>
-                <ul id="shop-list" class="item-list"></ul>
-            </section>
+                <ul class="item-list" id="shop-list"></ul>
+            </div>
 
-            <!-- 2. KUĆNE OBAVEZE (TO-DO) -->
-            <section class="glass-card bento-card">
+            <!-- 2. TO-DO ZADACI -->
+            <div class="card">
                 <div class="card-header">
-                    <h2>Kućne obaveze (To-Do)</h2>
+                    <h3>✅ Obaveze i zadaci</h3>
                     <span class="counter" id="todo-counter">0 zadataka</span>
                 </div>
                 <div class="input-group">
-                    <input type="text" id="todo-input" placeholder="Npr. usisati dnevnu sobu...">
-                    <select id="todo-assignee" class="assign-select">
-                        <option value="Svi">Svi</option>
-                    </select>
-                    <button id="todo-add-btn" class="action-btn">Dodaj</button>
+                    <input type="text" id="todo-input" placeholder="Nova obaveza...">
+                    <select id="todo-assignee" style="max-width: 100px;"></select>
+                    <button id="todo-add-btn">Dodaj</button>
                 </div>
-                <ul id="todo-list" class="item-list"></ul>
-            </section>
+                <ul class="item-list" id="todo-list"></ul>
+            </div>
 
-            <!-- 3. BITNI DOGAĐAJI I KALENDAR -->
-            <section class="glass-card bento-card">
+            <!-- 3. KALENDAR / DOGAĐAJI -->
+            <div class="card">
                 <div class="card-header">
-                    <h2>Bitni događaji</h2>
+                    <h3>📅 Važni događaji</h3>
                     <span class="counter" id="event-counter">0 događaja</span>
                 </div>
-                <div class="input-group event-inputs">
-                    <input type="text" id="event-input" placeholder="Naziv događaja...">
-                    <input type="date" id="event-date">
-                    <select id="event-category" class="assign-select">
-                        <option value="hitno">🔴 Hitno</option>
-                        <option value="rodjendan">🟢 Rođendan</option>
-                        <option value="ostalo">🔵 Ostalo</option>
-                    </select>
-                    <button id="event-add-btn" class="action-btn">Dodaj</button>
-                </div>
-                <ul id="event-list" class="item-list"></ul>
-            </section>
-
-            <!-- 4. ZAJEDNIČKI KUĆNI BUDŽET -->
-            <section class="glass-card bento-card">
-                <div class="card-header">
-                    <h2>Zajednički budžet</h2>
-                    <div class="budget-info">
-                        <span>Limit: <strong id="limit-display">500</strong>€</span>
-                        <button id="set-limit-btn" class="small-btn" title="Promeni zajednički limit">⚙️</button>
+                <div class="input-group" style="flex-direction: column; gap: 6px;">
+                    <div style="display: flex; gap: 6px; width: 100%;">
+                        <input type="text" id="event-input" placeholder="Naziv događaja..." style="flex:2;">
+                        <input type="date" id="event-date" style="flex:1;">
+                    </div>
+                    <div style="display: flex; gap: 6px; width: 100%;">
+                        <select id="event-category" style="flex:1;">
+                            <option value="obaveza">Obaveza</option>
+                            <option value="rodjendan">Rođendan</option>
+                            <option value="racun">Račun</option>
+                            <option value="ostalo">Ostalo</option>
+                        </select>
+                        <button id="event-add-btn" style="flex:1;">Zakaži</button>
                     </div>
                 </div>
-                <div class="budget-summary-bar">
-                    <div>Potrošeno: <strong id="total-expense">0.00</strong> €</div>
-                    <div>Preostalo: <strong id="budget-left">500.00</strong> €</div>
-                </div>
-                <div class="input-group expense-inputs">
-                    <input type="text" id="expense-input" placeholder="Opis troška...">
-                    <input type="number" id="expense-amount" placeholder="Iznos €">
-                    <select id="expense-category" class="assign-select">
-                        <option value="hrana">🛒 Hrana</option>
-                        <option value="racuni">💡 Računi</option>
-                        <option value="gorivo">⛽ Gorivo</option>
-                        <option value="stan">🏠 Stan</option>
-                        <option value="zabava">🎉 Zabava</option>
-                        <option value="ostalo">📦 Ostalo</option>
-                    </select>
-                    <select id="expense-payer" class="assign-select"></select>
-                    <button id="expense-add-btn" class="action-btn">Dodaj</button>
-                </div>
-                <ul id="expense-list" class="item-list"></ul>
-            </section>
+                <ul class="item-list" id="event-list"></ul>
+            </div>
 
-            <!-- 5. LIČNI / INDIVIDUALNI BUDŽET (PRIVATNO PO NALOGU) -->
-            <section class="glass-card bento-card">
+            <!-- 4. ZAJEDNIČKI BUDŽET -->
+            <div class="card">
                 <div class="card-header">
-                    <h2 id="personal-budget-title">Lični budžet</h2>
-                    <div class="budget-info" id="personal-budget-controls">
-                        <span>Limit: <strong id="personal-limit-display">200</strong>€</span>
-                        <button id="set-personal-limit-btn" class="small-btn" title="Promeni lični limit">⚙️</button>
+                    <h3>💰 Zajednički troškovi</h3>
+                    <button id="set-limit-btn" style="font-size: 11px; padding: 4px 8px;">Limit: <span id="limit-display">500</span>€</button>
+                </div>
+                <div style="font-size: 13px; margin-bottom: 10px; display: flex; justify-content: space-between; color: var(--text-muted);">
+                    <span>Potrošeno: <strong id="total-expense" style="color:var(--text-color);">0.00</strong> €</span>
+                    <span>Preostalo: <strong id="budget-left" style="color:var(--success);">0.00 €</strong></span>
+                </div>
+                <div class="input-group" style="flex-direction: column; gap: 6px;">
+                    <div style="display: flex; gap: 6px; width: 100%;">
+                        <input type="text" id="expense-input" placeholder="Naziv troška..." style="flex:2;">
+                        <input type="number" id="expense-amount" placeholder="Iznos €" style="flex:1; max-width:90px;">
+                    </div>
+                    <div style="display: flex; gap: 6px; width: 100%;">
+                        <select id="expense-category" style="flex:1;">
+                            <option value="hrana">🛒 Hrana</option>
+                            <option value="racuni">💡 Računi</option>
+                            <option value="gorivo">⛽ Gorivo</option>
+                            <option value="stan">🏠 Stan</option>
+                            <option value="zabava">🎉 Zabava</option>
+                            <option value="ostalo">📦 Ostalo</option>
+                        </select>
+                        <select id="expense-payer" style="flex:1; max-width: 100px;"></select>
+                        <button id="expense-add-btn">Dodaj</button>
                     </div>
                 </div>
-                
-                <!-- Prikazuje se ako korisnik NIJE prijavljen -->
-                <div id="personal-login-prompt" style="text-align:center; padding:40px 10px; color:#94a3b8; font-size:14px;">
-                    Izaberi svoj nalog ili napravi novi u gornjem desnom uglu da otključaš svoj privatni budžet.
-                </div>
+                <ul class="item-list" id="expense-list"></ul>
+            </div>
 
-                <!-- Prikazuje se kada JE korisnik prijavljen -->
-                <div id="personal-budget-content" class="hidden" style="display:flex; flex-direction:column; gap:16px;">
-                    <div class="budget-summary-bar">
-                        <div>Potrošeno: <strong id="personal-total-expense">0.00</strong> €</div>
-                        <div>Preostalo: <strong id="personal-budget-left">200.00</strong> €</div>
+            <!-- 5. LIČNI BUDŽET -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 id="personal-budget-title">Lični budžet</h3>
+                    <div id="personal-budget-controls" class="hidden">
+                        <button id="set-personal-limit-btn" style="font-size: 11px; padding: 4px 8px;">Limit: <span id="personal-limit-display">200</span>€</button>
+                    </div>
+                </div>
+                <div id="personal-login-prompt" style="display: flex; align-items: center; justify-content: center; flex: 1; color: var(--text-muted); font-size: 13px; text-align: center;">
+                    Prijavite se na nalog da biste pratili lične troškove.
+                </div>
+                <div id="personal-budget-content" class="hidden" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
+                    <div style="font-size: 13px; margin-bottom: 10px; display: flex; justify-content: space-between; color: var(--text-muted);">
+                        <span>Lično: <strong id="personal-total-expense" style="color:var(--text-color);">0.00</strong> €</span>
+                        <span>Ostalo: <strong id="personal-budget-left" style="color:var(--success);">0.00 €</strong></span>
                     </div>
                     <div class="input-group">
-                        <input type="text" id="personal-expense-input" placeholder="Lični trošak (npr. kafa, hobi...)">
-                        <input type="number" id="personal-expense-amount" placeholder="Iznos €">
-                        <button id="personal-expense-add-btn" class="action-btn">Dodaj</button>
+                        <input type="text" id="personal-expense-input" placeholder="Lični trošak...">
+                        <input type="number" id="personal-expense-amount" placeholder="€" style="max-width: 80px;">
+                        <button id="personal-expense-add-btn">Dodaj</button>
                     </div>
-                    <ul id="personal-expense-list" class="item-list"></ul>
+                    <ul class="item-list" id="personal-expense-list"></ul>
                 </div>
-            </section>
+            </div>
 
-            <!-- 6. INTERAKTIVNA TABLA ZA CRTANJE I PORUKE -->
-            <section class="glass-card bento-card">
+            <!-- 6. TABLA ZA CRTANJE -->
+            <div class="card">
                 <div class="card-header">
-                    <h2>Zajednička tabla (Crtanje & Poruke)</h2>
-                    <button id="clear-canvas-btn" class="small-btn">Obriši tablu</button>
+                    <h3>🎨 Brze beleške / Crtež</h3>
+                    <button id="clear-canvas-btn" style="font-size: 11px; padding: 4px 8px; background: #334155; color: var(--text-color);">Obriši</button>
                 </div>
-                <div class="canvas-container">
-                    <canvas id="drawing-canvas"></canvas>
-                </div>
-                <p class="canvas-hint">Pišite ili crtajte prstom/mišem direktno na tabli.</p>
-            </section>
-
-        </main>
+                <canvas id="drawing-canvas"></canvas>
+            </div>
+        </div>
     </div>
 
-    <script src="script.js"></script>
+    <!-- Povezivanje skripte sa verzijom radi izbegavanja keša -->
+    <script src="script.js?v=2.0"></script>
 </body>
 </html>
