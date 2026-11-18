@@ -8,12 +8,6 @@
   "currentUser": null,
   "shopping": [
     {
-      "id": 1795014969524,
-      "text": "Mleko",
-      "assignee": "marko",
-      "completed": false
-    },
-    {
       "id": 1795015147173,
       "text": "hleb",
       "assignee": "Luka",
