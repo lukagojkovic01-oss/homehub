@@ -2,7 +2,7 @@
 const GH_OWNER = "lukagojkovic01-oss";
 const GH_REPO = "homehub";
 const GH_FILE_PATH = "data.json";
-const GH_TOKEN = "ghp_3RlWOPXWcFKeAyLCLYP5HTN0apBgU20tNjtz";
+const GH_TOKEN = "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";
 
 // --- STANJE APLIKACIJE ---
 let registeredAccounts = [];
