@@ -66,7 +66,7 @@ async function loadDataFromGitHub(isBackground = false) {
     try {
         const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE_PATH}`;
         const response = await fetch(url, {
-            headers: { 'Authorization': `token ${GH_TOKEN}`, 'Cache-Control': 'no-cache' }
+            headers: { 'Authorization': `token ${GH_TOKEN}` }
         });
 
         if (response.status === 401) {
@@ -117,8 +117,8 @@ async function saveDataToGitHub() {
     try {
         const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE_PATH}`;
         
-        // UVEK uzmi najsvežiji SHA sa servera neposredno pre slanja da sprečimo 409 Conflict
-        const getRes = await fetch(url, { headers: { 'Authorization': `token ${GH_TOKEN}`, 'Cache-Control': 'no-cache' } });
+        // Uzmi najsvežiji SHA sa servera neposredno pre slanja
+        const getRes = await fetch(url, { headers: { 'Authorization': `token ${GH_TOKEN}` } });
         if (getRes.ok) {
             const fileData = await getRes.json();
             window.ghFileSha = fileData.sha;
