@@ -23,6 +23,7 @@ let todoList = [];
 let eventList = [];
 let expenseList = [];
 let monthlyLimit = 500;
+let canvasDataStore = "";
 let assignableMembers = ["Svi"];
 
 // --- INICIJALIZACIJA ---
@@ -54,6 +55,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('create-profile-btn').addEventListener('click', createLocalAccount);
     document.getElementById('login-profile-btn').addEventListener('click', loginLocalAccount);
     document.getElementById('logout-btn').addEventListener('click', logoutLocalAccount);
+    document.getElementById('delete-account-btn').addEventListener('click', deleteAccount);
 
     // Automatska provera osveženja sa GitHub-a svakih 5 sekundi
     setInterval(async () => {
@@ -89,6 +91,12 @@ async function loadDataFromGitHub(isBackground = false) {
             expenseList = decodedContent.expenses || [];
             monthlyLimit = decodedContent.limit || 500;
             
+            // Sinhronizacija table za crtanje sa servera ako postoji
+            if (decodedContent.canvasData && decodedContent.canvasData !== canvasDataStore) {
+                canvasDataStore = decodedContent.canvasData;
+                loadCanvasFromData(canvasDataStore);
+            }
+            
             if (currentUser) {
                 const updatedAccount = registeredAccounts.find(acc => acc.name === currentUser.name);
                 if (updatedAccount) {
@@ -117,7 +125,6 @@ async function saveDataToGitHub() {
     try {
         const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE_PATH}`;
         
-        // 1. Obavezno povuci najsvežiji SHA neposredno pre slanja
         const getRes = await fetch(`${url}?t=${new Date().getTime()}`, { headers: { 'Authorization': `token ${GH_TOKEN}` } });
         if (getRes.ok) {
             const fileData = await getRes.json();
@@ -130,7 +137,8 @@ async function saveDataToGitHub() {
             todo: todoList,
             events: eventList,
             expenses: expenseList,
-            limit: monthlyLimit
+            limit: monthlyLimit,
+            canvasData: canvasDataStore
         };
 
         const jsonString = JSON.stringify(dataObject, null, 2);
@@ -151,7 +159,6 @@ async function saveDataToGitHub() {
             body: JSON.stringify(bodyData)
         });
 
-        // 2. AUTOMATSKI OPORAVAK: Ako se desi 409 konflikt, odmah osveži SHA i ponovi zahtev jednom automatski!
         if (putRes.status === 409) {
             const retryGet = await fetch(`${url}?t=${new Date().getTime()}`, { headers: { 'Authorization': `token ${GH_TOKEN}` } });
             if (retryGet.ok) {
@@ -264,6 +271,24 @@ function logoutLocalAccount() {
     localStorage.removeItem("homehub_logged_user");
     populateProfileSelector();
     initAuth();
+}
+
+function deleteAccount() {
+    if (!currentUser) return;
+    const confirmDelete = confirm(`Da li ste sigurni da želite trajno da obrišete nalog "${currentUser.name}"?`);
+    if (!confirmDelete) return;
+
+    // Izbaci nalog iz liste registrovanih naloga
+    registeredAccounts = registeredAccounts.filter(acc => acc.name !== currentUser.name);
+    
+    // Odjavi korisnika
+    currentUser = null;
+    localStorage.removeItem("homehub_logged_user");
+
+    populateProfileSelector();
+    initAuth();
+    saveDataToGitHub();
+    alert("Nalog je uspešno obrisan.");
 }
 
 function initAuth() {
@@ -654,7 +679,7 @@ function renderPersonalBudget() {
     });
 }
 
-// --- 6. TABLA ZA CRTANJE ---
+// --- 6. TABLA ZA CRTANJE SA SINHRONIZACIJOM ---
 function initCanvas() {
     const canvas = document.getElementById('drawing-canvas');
     if(!canvas) return;
@@ -662,14 +687,25 @@ function initCanvas() {
     
     function resizeCanvas() {
         const rect = canvas.parentElement.getBoundingClientRect();
-        canvas.width = rect.width;
-        canvas.height = rect.height;
+        if (canvas.width !== rect.width || canvas.height !== (rect.height - 50)) {
+            canvas.width = rect.width;
+            canvas.height = rect.height - 50;
+            if (canvasDataStore) {
+                loadCanvasFromData(canvasDataStore);
+            }
+        }
     }
     resizeCanvas();
 
     let painting = false;
     function startPosition(e) { painting = true; draw(e); }
-    function endPosition() { painting = false; ctx.beginPath(); }
+    function endPosition() { 
+        if (painting) {
+            painting = false; 
+            ctx.beginPath();
+            canvasDataStore = canvas.toDataURL(); // Zapamti stanje
+        }
+    }
 
     function draw(e) {
         if (!painting) return;
@@ -694,7 +730,28 @@ function initCanvas() {
     canvas.addEventListener('touchend', endPosition);
     canvas.addEventListener('touchmove', (e) => { draw(e); e.preventDefault(); });
 
+    // Dugme za čuvanje i sinhronizaciju crteža
+    document.getElementById('sync-canvas-btn').addEventListener('click', () => {
+        canvasDataStore = canvas.toDataURL();
+        saveDataToGitHub();
+        alert("Crtež je sačuvan i poslat na GitHub!");
+    });
+
     document.getElementById('clear-canvas-btn').addEventListener('click', () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        canvasDataStore = canvas.toDataURL();
+        saveDataToGitHub();
     });
+}
+
+function loadCanvasFromData(dataUrl) {
+    const canvas = document.getElementById('drawing-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    img.onload = function() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+    };
+    img.src = dataUrl;
 }
