@@ -9,14 +9,7 @@
       "pin": "170"
     }
   ],
-  "shopping": [
-    {
-      "id": 1795019136248,
-      "text": "Krompir",
-      "assignee": "Domagoj",
-      "completed": false
-    }
-  ],
+  "shopping": [],
   "todo": [],
   "events": [],
   "expenses": [],
