@@ -35,7 +35,14 @@
       "completed": false
     }
   ],
-  "todo": [],
+  "todo": [
+    {
+      "id": 1795020435998,
+      "text": "Ispeglat veš",
+      "assignee": "Domagoj",
+      "completed": false
+    }
+  ],
   "events": [],
   "expenses": [],
   "limit": 500,
