@@ -38,6 +38,7 @@
                     <div id="user-info" class="user-info hidden">
                         <div class="avatar-circle" id="user-avatar-initial">K</div>
                         <span id="user-name">Korisnik</span>
+                        <button id="delete-account-btn" class="small-btn" style="background: rgba(239, 68, 68, 0.15); color: #f87171;" title="Trajno obriši nalog">Obriši</button>
                         <button id="logout-btn" title="Odjavi se">Odjava</button>
                     </div>
                 </div>
@@ -158,21 +159,24 @@
                 </div>
             </section>
 
-            <!-- 6. INTERAKTIVNA TABLA ZA CRTANJE I PORUKE -->
+            <!-- 6. INTERAKTIVNA TABLA ZA CRTANJE SA SINHRONIZACIJOM -->
             <section class="glass-card bento-card">
                 <div class="card-header">
                     <h2>Zajednička tabla (Crtanje & Poruke)</h2>
-                    <button id="clear-canvas-btn" class="small-btn">Obriši tablu</button>
+                    <div style="display: flex; gap: 6px;">
+                        <button id="sync-canvas-btn" class="small-btn" style="background: rgba(52, 211, 153, 0.2); color: #34d399;" title="Sačuvaj crtež na server">Sačuvaj</button>
+                        <button id="clear-canvas-btn" class="small-btn">Obriši tablu</button>
+                    </div>
                 </div>
                 <div class="canvas-container">
                     <canvas id="drawing-canvas"></canvas>
                 </div>
-                <p class="canvas-hint">Pišite ili crtajte prstom/mišem direktno na tabli.</p>
+                <p class="canvas-hint">Pišite ili crtajte prstom/mišem, pa kliknite „Sačuvaj“ da se sinhronizuje.</p>
             </section>
 
         </main>
     </div>
 
-    <script src="script.js?v=2.0"></script>
+    <script src="script.js?v=3.1"></script>
 </body>
 </html>
