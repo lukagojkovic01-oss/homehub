@@ -15,7 +15,10 @@ if (!GH_TOKEN) {
 
 // --- STANJE APLIKACIJE ---
 let registeredAccounts = [];
-let currentUser = null;
+// Trenutni korisnik se učitava isključivo lokalno za ovaj uređaj
+let savedUserJson = localStorage.getItem("homehub_logged_user");
+let currentUser = savedUserJson ? JSON.parse(savedUserJson) : null;
+
 let shoppingList = [];
 let todoList = [];
 let eventList = [];
@@ -68,7 +71,6 @@ async function loadDataFromGitHub(isBackground = false) {
         });
 
         if (response.status === 401) {
-            // Ako je token nevažeći ili obrisan, traži novi ponovo
             localStorage.removeItem("homehub_gh_token");
             GH_TOKEN = prompt("GitHub token nije validan ili je istekao. Unesi novi token:");
             if (GH_TOKEN) {
@@ -82,12 +84,20 @@ async function loadDataFromGitHub(isBackground = false) {
             const decodedContent = JSON.parse(decodeURIComponent(escape(atob(fileData.content))));
             
             registeredAccounts = decodedContent.accounts || [];
-            currentUser = decodedContent.currentUser || null;
             shoppingList = decodedContent.shopping || [];
             todoList = decodedContent.todo || [];
             eventList = decodedContent.events || [];
             expenseList = decodedContent.expenses || [];
             monthlyLimit = decodedContent.limit || 500;
+            
+            // Osveži podatke za lokalno ulogovanog korisnika (npr. ako su dodati lični troškovi)
+            if (currentUser) {
+                const updatedAccount = registeredAccounts.find(acc => acc.name === currentUser.name);
+                if (updatedAccount) {
+                    currentUser = updatedAccount;
+                    localStorage.setItem("homehub_logged_user", JSON.stringify(currentUser));
+                }
+            }
             
             window.ghFileSha = fileData.sha;
 
@@ -119,7 +129,6 @@ async function saveDataToGitHub() {
 
         const dataObject = {
             accounts: registeredAccounts,
-            currentUser: currentUser,
             shopping: shoppingList,
             todo: todoList,
             events: eventList,
@@ -207,6 +216,7 @@ function createLocalAccount() {
     const newAccount = { name, pin };
     registeredAccounts.push(newAccount);
     currentUser = newAccount;
+    localStorage.setItem("homehub_logged_user", JSON.stringify(currentUser));
     
     populateProfileSelector();
     initAuth();
@@ -229,15 +239,15 @@ function loginLocalAccount() {
     }
 
     currentUser = account;
+    localStorage.setItem("homehub_logged_user", JSON.stringify(currentUser));
     initAuth();
-    saveDataToGitHub();
 }
 
 function logoutLocalAccount() {
     currentUser = null;
+    localStorage.removeItem("homehub_logged_user");
     populateProfileSelector();
     initAuth();
-    saveDataToGitHub();
 }
 
 function initAuth() {
@@ -533,6 +543,11 @@ function addPersonalExpenseItem() {
     if (!currentUser.personalExpenses) currentUser.personalExpenses = [];
     currentUser.personalExpenses.push({ id: Date.now(), text: input.value.trim(), amount: parseFloat(amountInput.value) });
     
+    // Ažuriraj i u glavnom nizu naloga pre čuvanja na GitHub
+    const accIndex = registeredAccounts.findIndex(acc => acc.name === currentUser.name);
+    if (accIndex !== -1) registeredAccounts[accIndex] = currentUser;
+    localStorage.setItem("homehub_logged_user", JSON.stringify(currentUser));
+
     input.value = '';
     amountInput.value = '';
     renderPersonalBudget();
@@ -542,6 +557,11 @@ function addPersonalExpenseItem() {
 function deletePersonalExpense(id) {
     if (!currentUser || !currentUser.personalExpenses) return;
     currentUser.personalExpenses = currentUser.personalExpenses.filter(item => item.id !== id);
+
+    const accIndex = registeredAccounts.findIndex(acc => acc.name === currentUser.name);
+    if (accIndex !== -1) registeredAccounts[accIndex] = currentUser;
+    localStorage.setItem("homehub_logged_user", JSON.stringify(currentUser));
+
     renderPersonalBudget();
     saveDataToGitHub();
 }
@@ -552,6 +572,11 @@ function changePersonalLimit() {
     const newLimit = prompt(`Unesite lični mesečni limit za profil (${currentUser.name}) u €:`, currentLimit);
     if (newLimit !== null && !isNaN(newLimit) && newLimit > 0) {
         currentUser.personalLimit = parseFloat(newLimit);
+
+        const accIndex = registeredAccounts.findIndex(acc => acc.name === currentUser.name);
+        if (accIndex !== -1) registeredAccounts[accIndex] = currentUser;
+        localStorage.setItem("homehub_logged_user", JSON.stringify(currentUser));
+
         renderPersonalBudget();
         saveDataToGitHub();
     }
