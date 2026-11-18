@@ -57,10 +57,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('logout-btn').addEventListener('click', logoutLocalAccount);
     document.getElementById('delete-account-btn').addEventListener('click', deleteAccount);
 
-    // Automatska provera osveženja sa GitHub-a svakih 5 sekundi
+    // Automatska provera osveženja sa GitHub-a svakih 2 sekunde za bržu sinhronizaciju između partnera
     setInterval(async () => {
         await loadDataFromGitHub(true);
-    }, 5000);
+    }, 2000);
 });
 
 // --- GITHUB API: UČITAVANJE I ČUVANJE ---
@@ -108,6 +108,7 @@ async function loadDataFromGitHub(isBackground = false) {
 
             if (isBackground) {
                 populateProfileSelector();
+                initAuth();
                 renderShopping();
                 renderTodos();
                 renderEvents();
@@ -242,7 +243,7 @@ function createLocalAccount() {
     
     populateProfileSelector();
     initAuth();
-    saveDataToGitHub();
+    saveDataToGitHub(); // Odmah šalje na GitHub
 }
 
 function loginLocalAccount() {
@@ -283,7 +284,7 @@ function deleteAccount() {
 
     populateProfileSelector();
     initAuth();
-    saveDataToGitHub();
+    saveDataToGitHub(); // Odmah šalje na GitHub
     alert("Nalog je uspešno obrisan.");
 }
 
@@ -315,6 +316,7 @@ function updateAssignDropdowns() {
     selects.forEach(id => {
         const select = document.getElementById(id);
         if(!select) return;
+        const currentVal = select.value;
         select.innerHTML = '';
         assignableMembers.forEach(member => {
             const opt = document.createElement('option');
@@ -322,8 +324,13 @@ function updateAssignDropdowns() {
             opt.textContent = member;
             select.appendChild(opt);
         });
-        if (currentUser) select.value = currentUser.name;
-        else select.value = "Svi";
+        if (assignableMembers.includes(currentVal)) {
+            select.value = currentVal;
+        } else if (currentUser) {
+            select.value = currentUser.name;
+        } else {
+            select.value = "Svi";
+        }
     });
 }
 
@@ -335,21 +342,18 @@ function addShoppingItem() {
 
     shoppingList.push({ id: Date.now(), text: input.value.trim(), assignee, completed: false });
     input.value = '';
-    saveAndRenderShop();
+    renderShopping();
+    saveDataToGitHub();
 }
 
 function toggleShop(id) {
     shoppingList = shoppingList.map(item => item.id === id ? { ...item, completed: !item.completed } : item);
-    saveAndRenderShop();
+    renderShopping();
+    saveDataToGitHub();
 }
 
 function deleteShop(id) {
     shoppingList = shoppingList.filter(item => item.id !== id);
-    renderShopping(); // Odmah osveži ekran
-    saveDataToGitHub(); // Pošalji na server
-}
-
-function saveAndRenderShop() {
     renderShopping();
     saveDataToGitHub();
 }
@@ -389,21 +393,18 @@ function addTodoItem() {
 
     todoList.push({ id: Date.now(), text: input.value.trim(), assignee, completed: false });
     input.value = '';
-    saveAndRenderTodo();
+    renderTodos();
+    saveDataToGitHub();
 }
 
 function toggleTodo(id) {
     todoList = todoList.map(item => item.id === id ? { ...item, completed: !item.completed } : item);
-    saveAndRenderTodo();
+    renderTodos();
+    saveDataToGitHub();
 }
 
 function deleteTodo(id) {
     todoList = todoList.filter(item => item.id !== id);
-    renderTodos(); // Odmah osveži ekran
-    saveDataToGitHub(); // Pošalji na server
-}
-
-function saveAndRenderTodo() {
     renderTodos();
     saveDataToGitHub();
 }
@@ -448,16 +449,12 @@ function addEventItem() {
 
     input.value = '';
     dateInput.value = '';
-    saveAndRenderEvents();
+    renderEvents();
+    saveDataToGitHub();
 }
 
 function deleteEvent(id) {
     eventList = eventList.filter(item => item.id !== id);
-    renderEvents(); // Odmah osveži ekran
-    saveDataToGitHub(); // Pošalji na server
-}
-
-function saveAndRenderEvents() {
     renderEvents();
     saveDataToGitHub();
 }
@@ -510,26 +507,23 @@ function addExpenseItem() {
     expenseList.push({ id: Date.now(), text: input.value.trim(), amount: parseFloat(amountInput.value), category, payer });
     input.value = '';
     amountInput.value = '';
-    saveAndRenderExpenses();
+    renderExpenses();
+    saveDataToGitHub();
 }
 
 function deleteExpense(id) {
     expenseList = expenseList.filter(item => item.id !== id);
-    renderExpenses(); // Odmah osveži ekran
-    saveDataToGitHub(); // Pošalji na server
+    renderExpenses();
+    saveDataToGitHub();
 }
 
 function changeMonthlyLimit() {
     const newLimit = prompt("Unesite novi mesečni limit zajedničkog budžeta (€):", monthlyLimit);
     if (newLimit !== null && !isNaN(newLimit) && newLimit > 0) {
         monthlyLimit = parseFloat(newLimit);
-        saveAndRenderExpenses();
+        renderExpenses();
+        saveDataToGitHub();
     }
-}
-
-function saveAndRenderExpenses() {
-    renderExpenses();
-    saveDataToGitHub();
 }
 
 function renderExpenses() {
@@ -602,8 +596,8 @@ function deletePersonalExpense(id) {
     if (accIndex !== -1) registeredAccounts[accIndex] = currentUser;
     localStorage.setItem("homehub_logged_user", JSON.stringify(currentUser));
 
-    renderPersonalBudget(); // Odmah osveži ekran
-    saveDataToGitHub(); // Pošalji na server
+    renderPersonalBudget();
+    saveDataToGitHub();
 }
 
 function changePersonalLimit() {
