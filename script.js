@@ -2,7 +2,16 @@
 const GH_OWNER = "lukagojkovic01-oss";
 const GH_REPO = "homehub";
 const GH_FILE_PATH = "data.json";
-const GH_TOKEN = "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";
+
+// Automatski uzmi token iz memorije pretraživača, ili pitaj korisnika ako ga nema
+let GH_TOKEN = localStorage.getItem("homehub_gh_token") || "";
+
+if (!GH_TOKEN) {
+    GH_TOKEN = prompt("Unesi svoj GitHub Personal Access Token (biće sačuvan bezbedno samo na tvom uređaju):");
+    if (GH_TOKEN) {
+        localStorage.setItem("homehub_gh_token", GH_TOKEN.trim());
+    }
+}
 
 // --- STANJE APLIKACIJE ---
 let registeredAccounts = [];
@@ -57,6 +66,16 @@ async function loadDataFromGitHub(isBackground = false) {
         const response = await fetch(url, {
             headers: { 'Authorization': `token ${GH_TOKEN}` }
         });
+
+        if (response.status === 401) {
+            // Ako je token nevažeći ili obrisan, traži novi ponovo
+            localStorage.removeItem("homehub_gh_token");
+            GH_TOKEN = prompt("GitHub token nije validan ili je istekao. Unesi novi token:");
+            if (GH_TOKEN) {
+                localStorage.setItem("homehub_gh_token", GH_TOKEN.trim());
+            }
+            return;
+        }
 
         if (response.ok) {
             const fileData = await response.json();
