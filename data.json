@@ -1,11 +1,5 @@
 {
-  "accounts": [
-    {
-      "name": "Luka",
-      "pin": "1670",
-      "personalLimit": 1500
-    }
-  ],
+  "accounts": [],
   "shopping": [
     {
       "id": 1795018282390,
