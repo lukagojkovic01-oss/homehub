@@ -1,6 +1,14 @@
 {
-  "accounts": [],
-  "currentUser": null,
+  "accounts": [
+    {
+      "name": "Luka",
+      "pin": "1670"
+    }
+  ],
+  "currentUser": {
+    "name": "Luka",
+    "pin": "1670"
+  },
   "shopping": [],
   "todo": [],
   "events": [],
