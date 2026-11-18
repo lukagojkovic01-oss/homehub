@@ -29,14 +29,7 @@
       "completed": true
     }
   ],
-  "todo": [
-    {
-      "id": 1795016863276,
-      "text": "Ocisti stan",
-      "assignee": "marko",
-      "completed": true
-    }
-  ],
+  "todo": [],
   "events": [],
   "expenses": [],
   "limit": 500
