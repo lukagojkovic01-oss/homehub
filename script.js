@@ -15,7 +15,6 @@ if (!GH_TOKEN) {
 
 // --- STANJE APLIKACIJE ---
 let registeredAccounts = [];
-// Trenutni korisnik se učitava isključivo lokalno za ovaj uređaj
 let savedUserJson = localStorage.getItem("homehub_logged_user");
 let currentUser = savedUserJson ? JSON.parse(savedUserJson) : null;
 
@@ -56,10 +55,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('login-profile-btn').addEventListener('click', loginLocalAccount);
     document.getElementById('logout-btn').addEventListener('click', logoutLocalAccount);
 
-    // Automatska provera osveženja sa GitHub-a svakih 10 sekundi
+    // Automatska provera osveženja sa GitHub-a svakih 5 sekundi
     setInterval(async () => {
         await loadDataFromGitHub(true);
-    }, 10000);
+    }, 5000);
 });
 
 // --- GITHUB API: UČITAVANJE I ČUVANJE ---
@@ -67,7 +66,7 @@ async function loadDataFromGitHub(isBackground = false) {
     try {
         const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE_PATH}`;
         const response = await fetch(url, {
-            headers: { 'Authorization': `token ${GH_TOKEN}` }
+            headers: { 'Authorization': `token ${GH_TOKEN}`, 'Cache-Control': 'no-cache' }
         });
 
         if (response.status === 401) {
@@ -90,7 +89,6 @@ async function loadDataFromGitHub(isBackground = false) {
             expenseList = decodedContent.expenses || [];
             monthlyLimit = decodedContent.limit || 500;
             
-            // Osveži podatke za lokalno ulogovanog korisnika (npr. ako su dodati lični troškovi)
             if (currentUser) {
                 const updatedAccount = registeredAccounts.find(acc => acc.name === currentUser.name);
                 if (updatedAccount) {
@@ -101,14 +99,13 @@ async function loadDataFromGitHub(isBackground = false) {
             
             window.ghFileSha = fileData.sha;
 
-            if (isBackground) {
-                populateProfileSelector();
-                renderShopping();
-                renderTodos();
-                renderEvents();
-                renderExpenses();
-                renderPersonalBudget();
-            }
+            // Uvek osveži prikaz kada stignu novi podaci
+            populateProfileSelector();
+            renderShopping();
+            renderTodos();
+            renderEvents();
+            renderExpenses();
+            renderPersonalBudget();
         }
     } catch (e) {
         console.log("Greška pri učitavanju sa GitHub-a.", e);
@@ -119,7 +116,8 @@ async function saveDataToGitHub() {
     try {
         const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE_PATH}`;
         
-        const getRes = await fetch(url, { headers: { 'Authorization': `token ${GH_TOKEN}` } });
+        // Prvo uzmi najsvežiji SHA da sprečimo konflikt
+        const getRes = await fetch(url, { headers: { 'Authorization': `token ${GH_TOKEN}`, 'Cache-Control': 'no-cache' } });
         let sha = window.ghFileSha;
         if (getRes.ok) {
             const fileData = await getRes.json();
@@ -140,7 +138,7 @@ async function saveDataToGitHub() {
         const encodedContent = btoa(unescape(encodeURIComponent(jsonString)));
 
         const bodyData = {
-            message: "HomeHub auto-sync update",
+            message: "HomeHub instant sync update",
             content: encodedContent,
             sha: sha
         };
@@ -157,6 +155,8 @@ async function saveDataToGitHub() {
         if (putRes.ok) {
             const resJson = await putRes.json();
             window.ghFileSha = resJson.content.sha;
+            // Odmah povuci podatke da osvežiš stanje i osiguraš sinhronizaciju
+            await loadDataFromGitHub(true);
         }
     } catch (e) {
         console.log("Greška pri snimanju na GitHub:", e);
@@ -543,7 +543,6 @@ function addPersonalExpenseItem() {
     if (!currentUser.personalExpenses) currentUser.personalExpenses = [];
     currentUser.personalExpenses.push({ id: Date.now(), text: input.value.trim(), amount: parseFloat(amountInput.value) });
     
-    // Ažuriraj i u glavnom nizu naloga pre čuvanja na GitHub
     const accIndex = registeredAccounts.findIndex(acc => acc.name === currentUser.name);
     if (accIndex !== -1) registeredAccounts[accIndex] = currentUser;
     localStorage.setItem("homehub_logged_user", JSON.stringify(currentUser));
