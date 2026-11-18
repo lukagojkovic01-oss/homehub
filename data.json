@@ -47,6 +47,12 @@
       "text": "Sastaviti ladičar",
       "assignee": "Domagoj",
       "completed": false
+    },
+    {
+      "id": 1795020564453,
+      "text": "Postaviti plafonjeru",
+      "assignee": "Svi",
+      "completed": false
     }
   ],
   "events": [
