@@ -17,7 +17,14 @@
       "completed": false
     }
   ],
-  "todo": [],
+  "todo": [
+    {
+      "id": 1795017287316,
+      "text": "Ocisti kucu",
+      "assignee": "marko",
+      "completed": false
+    }
+  ],
   "events": [],
   "expenses": [],
   "limit": 500
