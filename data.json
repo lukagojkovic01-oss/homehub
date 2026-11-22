@@ -20,13 +20,13 @@
       "id": 1795020126918,
       "text": "Maslinovo ulje",
       "assignee": "Luka",
-      "completed": true
+      "completed": false
     },
     {
       "id": 1795020131363,
       "text": "Vegeta",
       "assignee": "Luka",
-      "completed": false
+      "completed": true
     },
     {
       "id": 1795020148135,
